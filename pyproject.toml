@@ -1,0 +1,40 @@
+[project]
+name = "ai-fashion-manager"
+version = "0.1.0"
+description = "AI Fashion Manager — Telegram-бот, MVP закрытой обкатки"
+requires-python = ">=3.12"
+dependencies = [
+    "aiogram>=3.13",
+    "anthropic>=0.40",
+    "sqlalchemy[asyncio]>=2.0.35",
+    "asyncpg>=0.29",
+    "pgvector>=0.3",
+    "alembic>=1.13",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.5",
+    "httpx>=0.27",
+    "boto3>=1.35",          # S3-совместимое хранилище (MinIO / R2 / S3)
+    "structlog>=24.4",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
