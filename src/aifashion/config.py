@@ -19,6 +19,15 @@ class Settings(BaseSettings):
 
     weather_provider: str = "open_meteo"
 
+    # Эмбеддинги для поиска дублей (требования §5). "none" — отключить.
+    embedding_provider: str = "voyage"
+    embedding_model: str = "voyage-3"
+    voyage_api_key: str = ""
+
+    # Анализ актуальных трендов (чтобы лук был современным).
+    trend_provider: str = "anthropic"
+    trend_ttl_days: int = 7  # тренды меняются медленно — кэшируем
+
     # БД
     database_url: str = "postgresql+asyncpg://app:app@localhost:5432/aifashion"
 

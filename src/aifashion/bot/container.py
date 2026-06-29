@@ -12,13 +12,24 @@ from aifashion.config import Settings
 from aifashion.db.base import make_engine, make_session_factory
 from aifashion.db.repositories import (
     SqlPhotoRepository,
+    SqlTrendCacheRepository,
     SqlUserRepository,
     SqlWardrobeRepository,
 )
 from aifashion.engine.goal1_purchase import PurchaseAdvisor
-from aifashion.providers.registry import get_llm, get_storage, get_weather
+from aifashion.engine.goal2_outfit import OutfitAdvisor
+from aifashion.providers.registry import (
+    get_embedder,
+    get_llm,
+    get_storage,
+    get_trends,
+    get_weather,
+)
+from aifashion.services.outfit_service import OutfitService
 from aifashion.services.photo_intake import PhotoIntake
 from aifashion.services.profile_service import ProfileService
+from aifashion.services.purchase_service import PurchaseService
+from aifashion.services.trend_service import TrendService
 from aifashion.services.wardrobe_service import WardrobeService
 
 
@@ -31,6 +42,8 @@ class AppContainer:
         self.llm = get_llm(settings)
         self.weather = get_weather(settings)
         self.storage = get_storage(settings)
+        self.embedder = get_embedder(settings)   # None — поиск дублей деградирует мягко
+        self.trends_provider = get_trends(settings)
 
     @asynccontextmanager
     async def unit_of_work(self):
@@ -48,8 +61,21 @@ class Services:
 
     def __init__(self, c: AppContainer, session: AsyncSession) -> None:
         self.profile = ProfileService(SqlUserRepository(session), c.llm, c.storage)
-        self.wardrobe = WardrobeService(SqlWardrobeRepository(session), c.llm, c.storage)
+        self.wardrobe = WardrobeService(
+            SqlWardrobeRepository(session), c.llm, c.storage, c.embedder
+        )
         self.photo_intake = PhotoIntake(c.llm)
-        self.advisor = PurchaseAdvisor(c.llm)
         self.photos = SqlPhotoRepository(session)
         self.storage = c.storage
+
+        trend_service = TrendService(
+            c.trends_provider,
+            SqlTrendCacheRepository(session),
+            ttl_days=c.settings.trend_ttl_days,
+        )
+        self.purchase = PurchaseService(
+            self.profile, self.wardrobe, PurchaseAdvisor(c.llm)
+        )
+        self.outfit = OutfitService(
+            self.profile, self.wardrobe, c.weather, trend_service, OutfitAdvisor(c.llm)
+        )

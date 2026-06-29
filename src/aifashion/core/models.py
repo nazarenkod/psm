@@ -104,6 +104,17 @@ class AppearanceAnalysis(BaseModel):
     silhouette: SilhouetteHints | None = None
 
 
+class OutfitSuggestion(BaseModel):
+    """Выход Цели 2 «Что надеть сейчас» (требования §6).
+
+    Образ собирается ИЗ ИМЕЮЩИХСЯ вещей: модель выбирает их id из гардероба.
+    """
+
+    item_ids: list[int] = Field(default_factory=list)
+    explanation: str
+    missing: str | None = None  # чего не хватает до идеала — мягкая зацепка к Цели 3
+
+
 # ── Сущности (персистятся, привязаны к user_id) ─────────────────────────────
 
 

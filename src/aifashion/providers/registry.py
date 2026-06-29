@@ -11,7 +11,13 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from aifashion.config import Settings
-from aifashion.providers.base import LLMProvider, StorageProvider, WeatherProvider
+from aifashion.providers.base import (
+    EmbeddingProvider,
+    LLMProvider,
+    StorageProvider,
+    TrendProvider,
+    WeatherProvider,
+)
 
 
 def _make_anthropic(s: Settings) -> LLMProvider:
@@ -69,3 +75,28 @@ def get_storage(s: Settings) -> StorageProvider:
         return _STORAGE[s.storage_provider](s)
     except KeyError:
         raise ValueError(f"Неизвестный STORAGE_PROVIDER: {s.storage_provider}") from None
+
+
+def get_embedder(s: Settings) -> EmbeddingProvider | None:
+    """None — если эмбеддинги отключены или нет ключа (поиск дублей деградирует мягко)."""
+    if s.embedding_provider in ("none", ""):
+        return None
+    if s.embedding_provider == "voyage":
+        if not s.voyage_api_key:
+            return None
+        from aifashion.providers.embedding.voyage import VoyageEmbedder
+
+        return VoyageEmbedder(api_key=s.voyage_api_key, model=s.embedding_model)
+    raise ValueError(f"Неизвестный EMBEDDING_PROVIDER: {s.embedding_provider}")
+
+
+def get_trends(s: Settings) -> TrendProvider | None:
+    if s.trend_provider in ("none", ""):
+        return None
+    if s.trend_provider == "anthropic":
+        if not s.anthropic_api_key:
+            return None
+        from aifashion.providers.trends.anthropic_trends import AnthropicTrendProvider
+
+        return AnthropicTrendProvider(api_key=s.anthropic_api_key, model=s.llm_model)
+    raise ValueError(f"Неизвестный TREND_PROVIDER: {s.trend_provider}")

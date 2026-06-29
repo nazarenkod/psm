@@ -75,6 +75,18 @@ class WardrobeItemORM(Base):
     user: Mapped[User] = relationship(back_populates="items")
 
 
+class TrendCacheORM(Base):
+    """Кэш сводок трендов по контексту (сезон/пол/стиль)."""
+
+    __tablename__ = "trend_cache"
+
+    key: Mapped[str] = mapped_column(String, primary_key=True)
+    text: Mapped[str] = mapped_column(String)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
 class PhotoORM(Base):
     __tablename__ = "photos"
 

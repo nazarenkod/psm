@@ -9,6 +9,7 @@
 """
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Protocol
 
 from aifashion.core.models import (
@@ -70,3 +71,11 @@ class PhotoRepository(Protocol):
     async def evictable_selfie_keys(self, user_id: int, *, keep: int = 5) -> list[str]:
         """Ключи старых селфи сверх лимита ``keep`` — для чистки (§4.5)."""
         ...
+
+
+class TrendCacheRepository(Protocol):
+    """Кэш сводок трендов (тренды меняются медленно — не дёргаем модель каждый раз)."""
+
+    async def get(self, key: str) -> tuple[str, datetime] | None: ...
+
+    async def set(self, key: str, text: str) -> None: ...

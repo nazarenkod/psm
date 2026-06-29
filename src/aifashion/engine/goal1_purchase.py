@@ -72,14 +72,33 @@ def summarize_profile(profile: UserProfile | None) -> str:
     return "Профиль: " + (", ".join(bits) if bits else "почти пуст") + "."
 
 
+def summarize_duplicates(duplicates: list[WardrobeItem]) -> str | None:
+    """Похожие вещи из гардероба (найдены по эмбеддингу, §5) — для оценки уникальности."""
+    if not duplicates:
+        return None
+    lines = []
+    for it in duplicates:
+        a = it.attrs
+        parts = [a.category] + [x for x in (a.color, a.style, a.brand) if x]
+        lines.append("- " + ", ".join(parts))
+    return (
+        "В гардеробе уже есть похожие вещи (учти при оценке уникальности — нет ли дубля):\n"
+        + "\n".join(lines)
+    )
+
+
 def build_prompt(
     profile: UserProfile | None,
     items: list[WardrobeItem],
     *,
+    duplicates: list[WardrobeItem] | None = None,
     item_link: str | None = None,
     note: str | None = None,
 ) -> str:
     parts = [summarize_profile(profile), summarize_wardrobe(items)]
+    dup = summarize_duplicates(duplicates or [])
+    if dup:
+        parts.append(dup)
     if item_link:
         parts.append(f"Ссылка на вещь: {item_link}")
     if note:
@@ -118,11 +137,14 @@ class PurchaseAdvisor:
         *,
         profile: UserProfile | None,
         wardrobe: list[WardrobeItem],
+        duplicates: list[WardrobeItem] | None = None,
         images: list[ImageInput] | None = None,
         item_link: str | None = None,
         note: str | None = None,
     ) -> PurchaseVerdict:
-        prompt = build_prompt(profile, wardrobe, item_link=item_link, note=note)
+        prompt = build_prompt(
+            profile, wardrobe, duplicates=duplicates, item_link=item_link, note=note
+        )
         return await self._llm.parse(
             system=SYSTEM_PROMPT,
             prompt=prompt,

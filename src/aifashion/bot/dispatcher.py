@@ -4,7 +4,7 @@ from __future__ import annotations
 from aiogram import Dispatcher
 
 from aifashion.bot.container import AppContainer
-from aifashion.bot.handlers import common, purchase
+from aifashion.bot.handlers import common, outfit, purchase
 from aifashion.bot.middlewares.whitelist import WhitelistMiddleware
 
 
@@ -16,7 +16,8 @@ def build_dispatcher(container: AppContainer) -> Dispatcher:
     dp.message.middleware(whitelist)
     dp.callback_query.middleware(whitelist)
 
-    # порядок важен: команды раньше «всё остальное → оценка покупки»
+    # порядок важен: команды и геолокация раньше «всё остальное → оценка покупки»
     dp.include_router(common.router)
+    dp.include_router(outfit.router)
     dp.include_router(purchase.router)
     return dp

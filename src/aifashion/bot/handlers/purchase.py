@@ -40,13 +40,7 @@ async def evaluate_purchase(message: Message, bot: Bot, container: AppContainer)
 
     await message.chat.do("typing")
     async with container.unit_of_work() as svc:
-        profile = await svc.profile.get_or_create(uid)
-        wardrobe = await svc.wardrobe.summary_for_prompt(uid)
-        verdict = await svc.advisor.evaluate(
-            profile=profile,
-            wardrobe=wardrobe,
-            images=[image] if image else None,
-            item_link=item_link,
-            note=note,
+        verdict = await svc.purchase.evaluate(
+            uid, image=image, item_link=item_link, note=note
         )
     await message.answer(format_verdict(verdict))

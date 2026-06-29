@@ -52,6 +52,24 @@ class WeatherProvider(Protocol):
         ...
 
 
+class EmbeddingProvider(Protocol):
+    """Текстовые эмбеддинги — для поиска дублей вещей (требования §5, pgvector)."""
+
+    async def embed(self, text: str) -> list[float]:
+        ...
+
+
+class TrendProvider(Protocol):
+    """Актуальные тренды — чтобы лук был современным.
+
+    Возвращает короткую сводку трендов под заданный контекст (сезон/пол/стиль).
+    Реализация может ходить в веб (web_search). Результат кэшируется выше.
+    """
+
+    async def current_brief(self, context: str) -> str:
+        ...
+
+
 class StorageProvider(Protocol):
     """Хранилище блобов фото. Метаданные лежат в БД (раздел 10.1).
 

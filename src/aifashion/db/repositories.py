@@ -4,6 +4,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import delete, func, select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from aifashion.core.models import (
@@ -14,7 +15,7 @@ from aifashion.core.models import (
     WardrobeItem,
     WardrobeItemAttrs,
 )
-from aifashion.db.models import PhotoORM, User, WardrobeItemORM
+from aifashion.db.models import PhotoORM, TrendCacheORM, User, WardrobeItemORM
 
 
 def _to_profile(u: User) -> UserProfile:
@@ -225,3 +226,24 @@ class SqlPhotoRepository:
             .offset(keep)
         )
         return list((await self._s.scalars(stmt)).all())
+
+
+class SqlTrendCacheRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._s = session
+
+    async def get(self, key: str) -> tuple[str, datetime] | None:
+        row = await self._s.get(TrendCacheORM, key)
+        return (row.text, row.updated_at) if row else None
+
+    async def set(self, key: str, text: str) -> None:
+        stmt = (
+            pg_insert(TrendCacheORM)
+            .values(key=key, text=text)
+            .on_conflict_do_update(
+                index_elements=[TrendCacheORM.key],
+                set_={"text": text, "updated_at": datetime.now(timezone.utc)},
+            )
+        )
+        await self._s.execute(stmt)
+        await self._s.flush()

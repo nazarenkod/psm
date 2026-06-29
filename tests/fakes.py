@@ -62,6 +62,8 @@ class FakeWardrobeRepo:
         self.items: list[WardrobeItem] = []
         self._next = 0
         self.touched: list[int] = []
+        self.similar: list[WardrobeItem] = []   # что вернёт find_similar
+        self.embeddings: dict[int, list[float] | None] = {}
 
     async def add_item(self, user_id, attrs, *, photo_key=None, embedding=None, status=ItemStatus.active):
         self._next += 1
@@ -69,6 +71,7 @@ class FakeWardrobeRepo:
             id=self._next, user_id=user_id, attrs=attrs, status=status, photo_key=photo_key
         )
         self.items.append(item)
+        self.embeddings[item.id] = embedding
         return item
 
     async def list_items(self, user_id, *, only_active=True):
@@ -87,10 +90,52 @@ class FakeWardrobeRepo:
                 i.status = status
 
     async def find_similar(self, user_id, embedding, *, limit=5):
-        return []
+        return self.similar[:limit]
 
     async def stale_items(self, user_id, *, days=60, limit=5):
         return []
+
+
+class FakeEmbedder:
+    def __init__(self) -> None:
+        self.texts: list[str] = []
+
+    async def embed(self, text: str) -> list[float]:
+        self.texts.append(text)
+        return [float(len(text)), 0.0, 1.0]
+
+
+class FakeWeather:
+    def __init__(self, data: dict | None = None) -> None:
+        self.data = data if data is not None else {"temperature_2m": 12, "wind_speed_10m": 3}
+        self.calls: list[tuple[float, float]] = []
+
+    async def current(self, lat: float, lon: float) -> dict:
+        self.calls.append((lat, lon))
+        return self.data
+
+
+class FakeTrendProvider:
+    def __init__(self, brief: str = "оверсайз пальто, бордовый акцент") -> None:
+        self.brief_text = brief
+        self.calls: list[str] = []
+
+    async def current_brief(self, context: str) -> str:
+        self.calls.append(context)
+        return self.brief_text
+
+
+class FakeTrendCache:
+    def __init__(self) -> None:
+        self.store: dict[str, tuple[str, "datetime"]] = {}
+
+    async def get(self, key: str):
+        return self.store.get(key)
+
+    async def set(self, key: str, text: str) -> None:
+        from datetime import datetime, timezone
+
+        self.store[key] = (text, datetime.now(timezone.utc))
 
 
 class FakeUserRepo:
@@ -130,6 +175,10 @@ __all__ = [
     "FakeStorage",
     "FakeWardrobeRepo",
     "FakeUserRepo",
+    "FakeEmbedder",
+    "FakeWeather",
+    "FakeTrendProvider",
+    "FakeTrendCache",
     "PhotoRole",
     "img",
     "attrs",
