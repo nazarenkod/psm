@@ -46,9 +46,9 @@ class LLMProvider(Protocol):
 
 
 class WeatherProvider(Protocol):
-    """Источник погоды для Цели 2 (раздел 6)."""
+    """Источник погоды для Цели 2 (требования §6). По координатам из профиля."""
 
-    async def current_by_city(self, city: str) -> dict:
+    async def current(self, lat: float, lon: float) -> dict:
         ...
 
 
