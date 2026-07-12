@@ -1,4 +1,4 @@
-# Один процесс приложения + Postgres(pgvector) + MinIO (требования §11).
+# Один процесс приложения + Postgres(pgvector). Фото — локально на диске (том media).
 # Никаких очередей/балансировщиков — простейшее работающее окружение (§10.2).
 services:
   db:
@@ -17,32 +17,21 @@ services:
       timeout: 3s
       retries: 10
 
-  minio:
-    image: minio/minio
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    volumes:
-      - minio_data:/data
-
   bot:
     build: .
     env_file: .env
     environment:
       DATABASE_URL: postgresql+asyncpg://app:app@db:5432/aifashion
-      S3_ENDPOINT_URL: http://minio:9000
+      STORAGE_PROVIDER: local
+      LOCAL_STORAGE_DIR: /app/data/media
     depends_on:
       db:
         condition: service_healthy
-      minio:
-        condition: service_started
+    volumes:
+      - media_data:/app/data/media   # фото переживают перезапуск контейнера
     command: >
       sh -c "alembic upgrade head && python -m aifashion.main"
 
 volumes:
   db_data:
-  minio_data:
+  media_data:

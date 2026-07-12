@@ -33,6 +33,12 @@ def _make_open_meteo(_: Settings) -> WeatherProvider:
     return OpenMeteoProvider()
 
 
+def _make_local(s: Settings) -> StorageProvider:
+    from aifashion.providers.storage.local_storage import LocalStorage
+
+    return LocalStorage(base_dir=s.local_storage_dir)
+
+
 def _make_s3(s: Settings) -> StorageProvider:
     from aifashion.providers.storage.s3_storage import S3Storage
 
@@ -53,6 +59,7 @@ _WEATHER: dict[str, Callable[[Settings], WeatherProvider]] = {
     "open_meteo": _make_open_meteo,
 }
 _STORAGE: dict[str, Callable[[Settings], StorageProvider]] = {
+    "local": _make_local,
     "s3": _make_s3,
 }
 

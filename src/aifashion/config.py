@@ -41,7 +41,8 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://app:app@localhost:5432/aifashion"
 
     # Хранилище фото
-    storage_provider: str = "s3"
+    storage_provider: str = "local"          # local (MVP) | s3
+    local_storage_dir: str = "./data/media"  # каталог для локального хранилища
     s3_endpoint_url: str = "http://localhost:9000"
     s3_bucket: str = "aifashion"
     s3_access_key: str = "minioadmin"

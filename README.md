@@ -8,13 +8,15 @@ Telegram-бот — персональный стилист. MVP закрыто�
 ## Стек
 
 Python 3.12 · aiogram 3 · Claude (`claude-opus-4-8`) через свой Protocol + Anthropic SDK ·
-PostgreSQL 16 + pgvector · S3-совместимое хранилище (MinIO/R2) · Open-Meteo · docker-compose.
+PostgreSQL 16 + pgvector · локальное хранилище фото (по умолчанию; опц. S3/MinIO/R2) ·
+Open-Meteo · docker-compose.
 
 ## Запуск (Docker)
 
 ```bash
 cp .env.example .env          # заполни TELEGRAM_BOT_TOKEN и ANTHROPIC_API_KEY
-docker compose up --build     # поднимет Postgres+pgvector, MinIO, применит миграции, запустит бота
+docker compose up --build     # поднимет Postgres+pgvector, применит миграции, запустит бота
+                              # фото — локально в томе media (S3 не нужен)
 ```
 
 Белый список: добавь свой Telegram ID в `WHITELIST_TELEGRAM_IDS` в `.env`
