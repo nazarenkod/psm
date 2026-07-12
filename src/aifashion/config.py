@@ -28,6 +28,15 @@ class Settings(BaseSettings):
     trend_provider: str = "anthropic"
     trend_ttl_days: int = 7  # тренды меняются медленно — кэшируем
 
+    # Генерация изображений капсулы. Claude не умеет — идём через OpenAI. "none" — отключить.
+    image_gen_provider: str = "openai"
+    image_model: str = "gpt-image-1"
+    image_size: str = "1024x1024"
+    openai_api_key: str = ""
+
+    # Память общения: сколько последних реплик подаём модели для контекста.
+    history_window: int = 20
+
     # БД
     database_url: str = "postgresql+asyncpg://app:app@localhost:5432/aifashion"
 

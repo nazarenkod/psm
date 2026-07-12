@@ -25,9 +25,15 @@ class FakeLLM:
         self.responses = list(responses or [])
         self.calls: list[dict] = []
 
-    async def parse(self, *, system, prompt, schema, images=None):
+    async def parse(self, *, system, prompt, schema, images=None, history=None):
         self.calls.append(
-            {"system": system, "prompt": prompt, "schema": schema, "images": images}
+            {
+                "system": system,
+                "prompt": prompt,
+                "schema": schema,
+                "images": images,
+                "history": history,
+            }
         )
         assert self.responses, "FakeLLM: нет заготовленного ответа"
         r = self.responses.pop(0)
@@ -35,8 +41,8 @@ class FakeLLM:
             return r
         return schema.model_validate(r)
 
-    async def complete(self, *, system, prompt, images=None) -> str:
-        self.calls.append({"system": system, "prompt": prompt, "images": images})
+    async def complete(self, *, system, prompt, images=None, history=None) -> str:
+        self.calls.append({"system": system, "prompt": prompt, "images": images, "history": history})
         return "ok"
 
 
@@ -115,6 +121,27 @@ class FakeWeather:
         return self.data
 
 
+class FakeMessageRepo:
+    def __init__(self) -> None:
+        self.records: list[tuple[int, str, str]] = []
+        self.preload: list = []  # list[ConversationTurn] возвращается из recent
+
+    async def add(self, user_id: int, role: str, text: str) -> None:
+        self.records.append((user_id, role, text))
+
+    async def recent(self, user_id: int, *, limit: int = 20):
+        return list(self.preload)
+
+
+class FakeImageGen:
+    def __init__(self) -> None:
+        self.prompts: list[str] = []
+
+    async def generate(self, prompt: str, *, size: str = "1024x1024") -> bytes:
+        self.prompts.append(prompt)
+        return b"PNGDATA"
+
+
 class FakeTrendProvider:
     def __init__(self, brief: str = "оверсайз пальто, бордовый акцент") -> None:
         self.brief_text = brief
@@ -179,6 +206,8 @@ __all__ = [
     "FakeWeather",
     "FakeTrendProvider",
     "FakeTrendCache",
+    "FakeMessageRepo",
+    "FakeImageGen",
     "PhotoRole",
     "img",
     "attrs",

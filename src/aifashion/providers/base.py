@@ -9,7 +9,7 @@ from typing import Protocol, TypeVar
 
 from pydantic import BaseModel
 
-from aifashion.core.models import ImageInput
+from aifashion.core.models import ConversationTurn, ImageInput
 
 TModel = TypeVar("TModel", bound=BaseModel)
 
@@ -21,6 +21,8 @@ class LLMProvider(Protocol):
     (не количественного) портрета силуэта (раздел 4.1) мультимодальный LLM
     подходит лучше отдельного CV-пайплайна. При желании vision можно вынести
     в отдельную реализацию, не трогая вызывающий код.
+
+    ``history`` — прошлые реплики диалога для контекста (память агента).
     """
 
     async def parse(
@@ -30,6 +32,7 @@ class LLMProvider(Protocol):
         prompt: str,
         schema: type[TModel],
         images: list[ImageInput] | None = None,
+        history: list[ConversationTurn] | None = None,
     ) -> TModel:
         """Вернуть структурированный ответ, провалидированный по ``schema``."""
         ...
@@ -40,8 +43,19 @@ class LLMProvider(Protocol):
         system: str,
         prompt: str,
         images: list[ImageInput] | None = None,
+        history: list[ConversationTurn] | None = None,
     ) -> str:
         """Вернуть свободный текстовый ответ."""
+        ...
+
+
+class ImageGenProvider(Protocol):
+    """Генерация изображений (капсулы/образы). Claude не умеет — идёт через OpenAI.
+
+    Отдельный порт: рассуждения остаются на LLM, рендер — на генераторе картинок.
+    """
+
+    async def generate(self, prompt: str, *, size: str = "1024x1024") -> bytes:
         ...
 
 

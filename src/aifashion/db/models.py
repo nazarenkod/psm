@@ -87,6 +87,20 @@ class TrendCacheORM(Base):
     )
 
 
+class MessageORM(Base):
+    """История общения (память агента). Каскадно удаляется с пользователем (§10)."""
+
+    __tablename__ = "messages"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    role: Mapped[str] = mapped_column(String(16))  # user | assistant
+    text: Mapped[str] = mapped_column(String)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class PhotoORM(Base):
     __tablename__ = "photos"
 

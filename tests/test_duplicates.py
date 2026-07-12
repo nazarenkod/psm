@@ -3,12 +3,14 @@ import pytest
 from aifashion.core.models import PurchaseVerdict, WardrobeItem
 from aifashion.core.signatures import item_signature_text
 from aifashion.engine.goal1_purchase import PurchaseAdvisor
+from aifashion.services.conversation_service import ConversationService
 from aifashion.services.profile_service import ProfileService
 from aifashion.services.purchase_service import PurchaseService
 from aifashion.services.wardrobe_service import WardrobeService
 from tests.fakes import (
     FakeEmbedder,
     FakeLLM,
+    FakeMessageRepo,
     FakeStorage,
     FakeUserRepo,
     FakeWardrobeRepo,
@@ -57,7 +59,8 @@ async def test_purchase_service_feeds_duplicates_into_verdict():
     wardrobe = WardrobeService(repo, FakeLLM([attrs("sweater", color="grey")]), FakeStorage(), emb)
     profile = ProfileService(FakeUserRepo(), FakeLLM(), FakeStorage())
     advisor_llm = FakeLLM([PurchaseVerdict(buy=False, score=15, reasoning="дубль")])
-    service = PurchaseService(profile, wardrobe, PurchaseAdvisor(advisor_llm))
+    conversation = ConversationService(FakeMessageRepo())
+    service = PurchaseService(profile, wardrobe, PurchaseAdvisor(advisor_llm), conversation)
 
     verdict = await service.evaluate(1, image=img())
 

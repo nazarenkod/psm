@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 from aifashion.core.models import (
+    ConversationTurn,
     OutfitSuggestion,
     UserProfile,
     WardrobeItem,
@@ -102,10 +103,11 @@ class OutfitAdvisor:
         occasion: str | None = None,
         weather: dict | None = None,
         trend_brief: str | None = None,
+        history: list[ConversationTurn] | None = None,
     ) -> OutfitSuggestion:
         prompt = build_prompt(
             profile, wardrobe, occasion=occasion, weather=weather, trend_brief=trend_brief
         )
         return await self._llm.parse(
-            system=SYSTEM_PROMPT, prompt=prompt, schema=OutfitSuggestion
+            system=SYSTEM_PROMPT, prompt=prompt, schema=OutfitSuggestion, history=history
         )

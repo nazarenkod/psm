@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 from aifashion.core.models import (
+    ConversationTurn,
     ImageInput,
     PurchaseVerdict,
     UserProfile,
@@ -141,6 +142,7 @@ class PurchaseAdvisor:
         images: list[ImageInput] | None = None,
         item_link: str | None = None,
         note: str | None = None,
+        history: list[ConversationTurn] | None = None,
     ) -> PurchaseVerdict:
         prompt = build_prompt(
             profile, wardrobe, duplicates=duplicates, item_link=item_link, note=note
@@ -150,4 +152,5 @@ class PurchaseAdvisor:
             prompt=prompt,
             schema=PurchaseVerdict,
             images=images,
+            history=history,
         )

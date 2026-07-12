@@ -8,8 +8,9 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from aifashion.core.models import OutfitSuggestion, UserProfile, WardrobeItem
-from aifashion.engine.goal2_outfit import OutfitAdvisor
+from aifashion.engine.goal2_outfit import OutfitAdvisor, format_outfit
 from aifashion.providers.base import WeatherProvider
+from aifashion.services.conversation_service import ConversationService
 from aifashion.services.profile_service import ProfileService
 from aifashion.services.trend_service import TrendService
 from aifashion.services.wardrobe_service import WardrobeService
@@ -34,12 +35,14 @@ class OutfitService:
         weather: WeatherProvider,
         trends: TrendService,
         advisor: OutfitAdvisor,
+        conversation: ConversationService,
     ) -> None:
         self._profile = profile
         self._wardrobe = wardrobe
         self._weather = weather
         self._trends = trends
         self._advisor = advisor
+        self._conversation = conversation
 
     def _trend_context(self, profile: UserProfile, occasion: str | None, month: int) -> str:
         sex = profile.sex or "унисекс"
@@ -58,6 +61,7 @@ class OutfitService:
         items = await self._wardrobe.summary_for_prompt(user_id)
         context = self._trend_context(profile, occasion, datetime.now(timezone.utc).month)
         trend_brief = await self._trends.brief(context)
+        history = await self._conversation.history(user_id)
 
         suggestion = await self._advisor.suggest(
             profile=profile,
@@ -65,6 +69,7 @@ class OutfitService:
             occasion=occasion,
             weather=weather,
             trend_brief=trend_brief,
+            history=history,
         )
 
         by_id = {it.id: it for it in items}
@@ -72,4 +77,7 @@ class OutfitService:
         for iid in suggestion.item_ids:
             if iid in by_id:
                 await self._wardrobe.confirm_worn(iid)
+
+        await self._conversation.record_user(user_id, f"Что надеть, повод: {occasion or 'обычный'}")
+        await self._conversation.record_assistant(user_id, format_outfit(suggestion, by_id))
         return suggestion, by_id

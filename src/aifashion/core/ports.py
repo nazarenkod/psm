@@ -13,6 +13,7 @@ from datetime import datetime
 from typing import Protocol
 
 from aifashion.core.models import (
+    ConversationTurn,
     ItemStatus,
     PhotoRole,
     UserProfile,
@@ -79,3 +80,13 @@ class TrendCacheRepository(Protocol):
     async def get(self, key: str) -> tuple[str, datetime] | None: ...
 
     async def set(self, key: str, text: str) -> None: ...
+
+
+class MessageRepository(Protocol):
+    """История общения для памяти агента. Привязана к user_id, каскад при /delete."""
+
+    async def add(self, user_id: int, role: str, text: str) -> None: ...
+
+    async def recent(self, user_id: int, *, limit: int = 20) -> list[ConversationTurn]:
+        """Последние ``limit`` реплик в хронологическом порядке (старые → новые)."""
+        ...

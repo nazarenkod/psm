@@ -104,6 +104,26 @@ class AppearanceAnalysis(BaseModel):
     silhouette: SilhouetteHints | None = None
 
 
+class ConversationTurn(BaseModel):
+    """Реплика диалога для памяти агента (роль + текст)."""
+
+    role: str  # "user" | "assistant"
+    text: str
+
+
+class CapsulePlan(BaseModel):
+    """Выход Цели 3 «Капсула и что докупить» (требования §7).
+
+    Последовательность покупок, а не список из 20. Плюс визуальный промпт, по
+    которому генератор изображений рисует концепт капсулы (иллюстративно).
+    """
+
+    gaps: list[str] = Field(default_factory=list)   # карта пробелов
+    next_purchase: str                              # приоритетная следующая покупка
+    explanation: str                                # как капсула будет работать
+    image_prompt: str                               # промпт для генерации изображения
+
+
 class OutfitSuggestion(BaseModel):
     """Выход Цели 2 «Что надеть сейчас» (требования §6).
 

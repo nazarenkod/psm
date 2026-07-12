@@ -9,12 +9,14 @@ from aifashion.engine.goal2_outfit import (
     format_weather,
     summarize_wardrobe_for_outfit,
 )
+from aifashion.services.conversation_service import ConversationService
 from aifashion.services.outfit_service import NeedLocation, OutfitService
 from aifashion.services.profile_service import ProfileService
 from aifashion.services.trend_service import TrendService
 from aifashion.services.wardrobe_service import WardrobeService
 from tests.fakes import (
     FakeLLM,
+    FakeMessageRepo,
     FakeStorage,
     FakeTrendCache,
     FakeTrendProvider,
@@ -101,8 +103,9 @@ async def test_outfit_service_uses_weather_trends_and_confirms_worn():
     trend_provider = FakeTrendProvider()
     trends = TrendService(trend_provider, FakeTrendCache(), ttl_days=7)
     advisor = OutfitAdvisor(FakeLLM([OutfitSuggestion(item_ids=[1], explanation="ок")]))
+    conversation = ConversationService(FakeMessageRepo())
 
-    service = OutfitService(profile, wardrobe, weather, trends, advisor)
+    service = OutfitService(profile, wardrobe, weather, trends, advisor, conversation)
     suggestion, by_id = await service.suggest(1, occasion="прогулка")
 
     assert suggestion.item_ids == [1]
@@ -121,6 +124,7 @@ async def test_outfit_service_requires_location():
         FakeWeather(),
         TrendService(None, FakeTrendCache()),
         OutfitAdvisor(FakeLLM()),
+        ConversationService(FakeMessageRepo()),
     )
     with pytest.raises(NeedLocation):
         await service.suggest(1)

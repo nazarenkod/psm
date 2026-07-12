@@ -8,6 +8,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from aifashion.core.models import (
+    ConversationTurn,
     ItemStatus,
     PhotoRole,
     SilhouetteHints,
@@ -15,7 +16,7 @@ from aifashion.core.models import (
     WardrobeItem,
     WardrobeItemAttrs,
 )
-from aifashion.db.models import PhotoORM, TrendCacheORM, User, WardrobeItemORM
+from aifashion.db.models import MessageORM, PhotoORM, TrendCacheORM, User, WardrobeItemORM
 
 
 def _to_profile(u: User) -> UserProfile:
@@ -226,6 +227,26 @@ class SqlPhotoRepository:
             .offset(keep)
         )
         return list((await self._s.scalars(stmt)).all())
+
+
+class SqlMessageRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._s = session
+
+    async def add(self, user_id: int, role: str, text: str) -> None:
+        self._s.add(MessageORM(user_id=user_id, role=role, text=text))
+        await self._s.flush()
+
+    async def recent(self, user_id: int, *, limit: int = 20) -> list[ConversationTurn]:
+        stmt = (
+            select(MessageORM)
+            .where(MessageORM.user_id == user_id)
+            .order_by(MessageORM.id.desc())
+            .limit(limit)
+        )
+        rows = list((await self._s.scalars(stmt)).all())
+        rows.reverse()  # хронологический порядок: старые → новые
+        return [ConversationTurn(role=r.role, text=r.text) for r in rows]
 
 
 class SqlTrendCacheRepository:

@@ -13,6 +13,7 @@ from collections.abc import Callable
 from aifashion.config import Settings
 from aifashion.providers.base import (
     EmbeddingProvider,
+    ImageGenProvider,
     LLMProvider,
     StorageProvider,
     TrendProvider,
@@ -100,3 +101,16 @@ def get_trends(s: Settings) -> TrendProvider | None:
 
         return AnthropicTrendProvider(api_key=s.anthropic_api_key, model=s.llm_model)
     raise ValueError(f"Неизвестный TREND_PROVIDER: {s.trend_provider}")
+
+
+def get_image_gen(s: Settings) -> ImageGenProvider | None:
+    """None — если генерация картинок отключена или нет ключа (капсула отдаётся текстом)."""
+    if s.image_gen_provider in ("none", ""):
+        return None
+    if s.image_gen_provider == "openai":
+        if not s.openai_api_key:
+            return None
+        from aifashion.providers.imagegen.openai_images import OpenAIImageGen
+
+        return OpenAIImageGen(api_key=s.openai_api_key, model=s.image_model)
+    raise ValueError(f"Неизвестный IMAGE_GEN_PROVIDER: {s.image_gen_provider}")

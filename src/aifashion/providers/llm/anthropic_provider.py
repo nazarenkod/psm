@@ -10,7 +10,7 @@ from typing import TypeVar
 from anthropic import AsyncAnthropic
 from pydantic import BaseModel
 
-from aifashion.core.models import ImageInput
+from aifashion.core.models import ConversationTurn, ImageInput
 
 TModel = TypeVar("TModel", bound=BaseModel)
 
@@ -36,6 +36,16 @@ class AnthropicProvider:
         blocks.append({"type": "text", "text": prompt})
         return blocks
 
+    def _messages(
+        self,
+        prompt: str,
+        images: list[ImageInput] | None,
+        history: list[ConversationTurn] | None,
+    ) -> list[dict]:
+        msgs: list[dict] = [{"role": t.role, "content": t.text} for t in history or []]
+        msgs.append({"role": "user", "content": self._content(prompt, images)})
+        return msgs
+
     async def parse(
         self,
         *,
@@ -43,13 +53,14 @@ class AnthropicProvider:
         prompt: str,
         schema: type[TModel],
         images: list[ImageInput] | None = None,
+        history: list[ConversationTurn] | None = None,
     ) -> TModel:
         resp = await self._client.messages.parse(
             model=self._model,
             max_tokens=4096,
             system=system,
             thinking={"type": "adaptive"},
-            messages=[{"role": "user", "content": self._content(prompt, images)}],
+            messages=self._messages(prompt, images, history),
             output_format=schema,
         )
         if resp.parsed_output is None:
@@ -62,12 +73,13 @@ class AnthropicProvider:
         system: str,
         prompt: str,
         images: list[ImageInput] | None = None,
+        history: list[ConversationTurn] | None = None,
     ) -> str:
         resp = await self._client.messages.create(
             model=self._model,
             max_tokens=4096,
             system=system,
             thinking={"type": "adaptive"},
-            messages=[{"role": "user", "content": self._content(prompt, images)}],
+            messages=self._messages(prompt, images, history),
         )
         return "".join(b.text for b in resp.content if b.type == "text")
