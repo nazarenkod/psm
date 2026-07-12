@@ -30,7 +30,7 @@ class Settings(BaseSettings):
 
     # Генерация изображений капсулы. Claude не умеет — идём через OpenAI. "none" — отключить.
     image_gen_provider: str = "openai"
-    image_model: str = "gpt-image-1"
+    image_model: str = "gpt-image-2"
     image_size: str = "1024x1024"
     openai_api_key: str = ""
 

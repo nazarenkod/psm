@@ -12,7 +12,7 @@ from openai import AsyncOpenAI
 
 
 class OpenAIImageGen:
-    def __init__(self, api_key: str, model: str = "gpt-image-1") -> None:
+    def __init__(self, api_key: str, model: str = "gpt-image-2") -> None:
         self._client = AsyncOpenAI(api_key=api_key)
         self._model = model
 

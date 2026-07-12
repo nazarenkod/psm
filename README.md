@@ -68,7 +68,7 @@ STORAGE_PROVIDER=s3
 LLM_PROVIDER=anthropic      LLM_MODEL=claude-opus-4-8
 EMBEDDING_PROVIDER=voyage   # поиск дублей (VOYAGE_API_KEY)
 TREND_PROVIDER=anthropic    # тренды через web_search
-IMAGE_GEN_PROVIDER=openai   IMAGE_MODEL=gpt-image-1   # капсула (OPENAI_API_KEY)
+IMAGE_GEN_PROVIDER=openai   IMAGE_MODEL=gpt-image-2   # капсула (OPENAI_API_KEY)
 ```
 
 ## Статус
