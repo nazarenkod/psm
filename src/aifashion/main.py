@@ -1,4 +1,4 @@
-"""Точка входа: один процесс — бот + планировщик (требования §10.2)."""
+"""Точка входа: один процесс — бот + (позже) планировщик (требования §10.2)."""
 from __future__ import annotations
 
 import asyncio
@@ -14,16 +14,37 @@ from aifashion.config import settings
 log = structlog.get_logger()
 
 
-async def run() -> None:
-    logging.basicConfig(level=settings.log_level)
+def _check_and_report(container: AppContainer) -> None:
+    """Проверить обязательные ключи и залогировать состояние провайдеров.
+
+    Обязательны: TELEGRAM_BOT_TOKEN и ключ LLM (ядро). Остальное опционально —
+    при отсутствии ключа функция деградирует мягко, о чём и сообщаем.
+    """
     if not settings.telegram_bot_token:
         raise SystemExit("TELEGRAM_BOT_TOKEN не задан (.env)")
+    if settings.llm_provider == "anthropic" and not settings.anthropic_api_key:
+        raise SystemExit("ANTHROPIC_API_KEY не задан — LLM это ядро, без него никак (.env)")
 
+    log.info(
+        "readiness",
+        storage=settings.storage_provider,
+        llm=f"{settings.llm_provider}:{settings.llm_model}",
+        embeddings="on" if container.embedder else "off (поиск дублей деградирует)",
+        trends="on" if container.trends_provider else "off (лук без трендового слоя)",
+        image_gen="on" if container.image_gen else "off (капсула текстом, без картинки)",
+        whitelist=len(settings.whitelist_ids) or "из БД",
+    )
+
+
+async def run() -> None:
+    logging.basicConfig(level=settings.log_level)
     container = AppContainer(settings)
+    _check_and_report(container)
+
     bot = Bot(settings.telegram_bot_token)
     dp = build_dispatcher(container)
 
-    log.info("bot.start", llm_provider=settings.llm_provider, model=settings.llm_model)
+    log.info("bot.start")
     try:
         await dp.start_polling(bot)
     finally:
