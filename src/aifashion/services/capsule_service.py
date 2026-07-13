@@ -9,6 +9,8 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
+import structlog
+
 from aifashion.core.models import CapsulePlan
 from aifashion.engine.goal3_capsule import CapsuleAdvisor, format_capsule
 from aifashion.providers.base import ImageGenProvider, StorageProvider
@@ -16,6 +18,8 @@ from aifashion.services.conversation_service import ConversationService
 from aifashion.services.profile_service import ProfileService
 from aifashion.services.trend_service import TrendService
 from aifashion.services.wardrobe_service import WardrobeService
+
+log = structlog.get_logger()
 
 _SEASONS = {12: "зима", 1: "зима", 2: "зима", 3: "весна", 4: "весна", 5: "весна",
             6: "лето", 7: "лето", 8: "лето", 9: "осень", 10: "осень", 11: "осень"}
@@ -69,4 +73,11 @@ class CapsuleService:
 
         await self._conversation.record_user(user_id, "Собери капсулу и план докупок.")
         await self._conversation.record_assistant(user_id, format_capsule(plan))
+        log.info(
+            "goal3.capsule",
+            user_id=user_id,
+            next_purchase=plan.next_purchase,
+            gaps=len(plan.gaps),
+            image=image is not None,
+        )
         return CapsuleResult(plan=plan, image=image)

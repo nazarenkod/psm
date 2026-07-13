@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
+import structlog
+
 from aifashion.core.models import OutfitSuggestion, UserProfile, WardrobeItem
 from aifashion.engine.goal2_outfit import OutfitAdvisor, format_outfit
 from aifashion.providers.base import WeatherProvider
@@ -14,6 +16,8 @@ from aifashion.services.conversation_service import ConversationService
 from aifashion.services.profile_service import ProfileService
 from aifashion.services.trend_service import TrendService
 from aifashion.services.wardrobe_service import WardrobeService
+
+log = structlog.get_logger()
 
 _SEASONS = {12: "зима", 1: "зима", 2: "зима", 3: "весна", 4: "весна", 5: "весна",
             6: "лето", 7: "лето", 8: "лето", 9: "осень", 10: "осень", 11: "осень"}
@@ -80,4 +84,12 @@ class OutfitService:
 
         await self._conversation.record_user(user_id, f"Что надеть, повод: {occasion or 'обычный'}")
         await self._conversation.record_assistant(user_id, format_outfit(suggestion, by_id))
+        log.info(
+            "goal2.outfit",
+            user_id=user_id,
+            occasion=occasion,
+            items=len(suggestion.item_ids),
+            wardrobe=len(items),
+            trend=trend_brief is not None,
+        )
         return suggestion, by_id

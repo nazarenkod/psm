@@ -39,6 +39,35 @@ docker compose up --build     # поднимет Postgres+pgvector, примен
 
 При старте бот пишет лог `readiness` — видно, какие провайдеры активны, а какие в деградации.
 
+## Логи и отладка
+
+Всё пишется в **stdout** структурированным логом (structlog). В Docker:
+
+```bash
+docker compose logs -f bot          # живой поток логов бота
+docker compose logs bot | grep goal1   # только вердикты покупок
+```
+
+Что видно на уровне `INFO` (по умолчанию):
+- `readiness` — при старте: какие провайдеры активны/в деградации;
+- `update` — каждое входящее сообщение (`user_id`, тип, превью текста);
+- `llm.parse` / `llm.complete` — каждый вызов модели: `model`, `ms` (латентность),
+  `in_tokens`/`out_tokens`, `stop` (в т.ч. `refusal`);
+- `goal1.verdict` / `goal2.outfit` / `goal3.capsule` — исход по каждой цели
+  (например `buy`/`score`, число вещей в образе, `next_purchase`).
+
+Глубокая отладка — **`LOG_LEVEL=DEBUG`**: добавляются `llm.parse.io` / `llm.complete.io`
+с полным промптом и распарсенным ответом модели (без картинок). Так видно, *почему*
+получился именно такой вердикт.
+
+**История диалога** хранится в БД (таблица `messages`) — «диалоги читаются глазами» (§3):
+```bash
+docker compose exec db psql -U app -d aifashion \
+  -c "select role, left(text,120) from messages where user_id=<ID> order by id desc limit 20;"
+```
+
+`LOG_FORMAT=json` — переключить на JSON (удобно, если будешь собирать логи в файл/агрегатор).
+
 ## Разработка
 
 ```bash

@@ -49,7 +49,8 @@ class Settings(BaseSettings):
     s3_secret_key: str = "minioadmin"
     s3_region: str = "us-east-1"
 
-    log_level: str = "INFO"
+    log_level: str = "INFO"          # INFO для обычной работы, DEBUG — видеть промпты/ответы
+    log_format: str = "console"      # console (читаемо) | json (для сбора логов)
 
     @property
     def whitelist_ids(self) -> set[int]:

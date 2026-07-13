@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import asyncio
-import logging
 
 import structlog
 from aiogram import Bot
@@ -10,6 +9,7 @@ from aiogram import Bot
 from aifashion.bot.container import AppContainer
 from aifashion.bot.dispatcher import build_dispatcher
 from aifashion.config import settings
+from aifashion.logging_setup import setup_logging
 
 log = structlog.get_logger()
 
@@ -37,7 +37,7 @@ def _check_and_report(container: AppContainer) -> None:
 
 
 async def run() -> None:
-    logging.basicConfig(level=settings.log_level)
+    setup_logging(settings.log_level, settings.log_format)
     container = AppContainer(settings)
     _check_and_report(container)
 

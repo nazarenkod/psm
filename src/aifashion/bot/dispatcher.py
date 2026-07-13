@@ -5,12 +5,17 @@ from aiogram import Dispatcher
 
 from aifashion.bot.container import AppContainer
 from aifashion.bot.handlers import capsule, common, outfit, purchase
+from aifashion.bot.middlewares.logging import LoggingMiddleware
 from aifashion.bot.middlewares.whitelist import WhitelistMiddleware
 
 
 def build_dispatcher(container: AppContainer) -> Dispatcher:
     dp = Dispatcher()
     dp["container"] = container  # инъекция в хендлеры по имени параметра
+
+    logging_mw = LoggingMiddleware()
+    dp.message.middleware(logging_mw)
+    dp.callback_query.middleware(logging_mw)
 
     whitelist = WhitelistMiddleware(container)
     dp.message.middleware(whitelist)

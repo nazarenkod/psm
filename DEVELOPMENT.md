@@ -201,11 +201,28 @@ docker compose up --build
 
 ---
 
-## Куда смотреть при отладке
+## Наблюдаемость и отладка
 
-- **Старт:** лог `readiness` (в `main.py`) — какие провайдеры активны/в деградации.
+Логи — structlog в **stdout** (`docker compose logs -f bot`). Настройка в
+`logging_setup.py`; уровень/формат — `LOG_LEVEL` / `LOG_FORMAT`.
+
+| Событие (лог) | Уровень | Где | Что показывает |
+|---|---|---|---|
+| `readiness` | INFO | `main.py` | активные/деградировавшие провайдеры при старте |
+| `update` | INFO | `bot/middlewares/logging.py` | входящее сообщение (user_id, тип, превью) |
+| `llm.parse` / `llm.complete` | INFO | `providers/llm/anthropic_provider.py` | model, `ms`, токены, `stop` |
+| `llm.parse.io` / `llm.complete.io` | DEBUG | там же | полный промпт + распарсенный ответ (без картинок) |
+| `goal1.verdict` / `goal2.outfit` / `goal3.capsule` | INFO | сервисы | исход цели |
+
+Как дебажить конкретный «странный» ответ:
+1. `LOG_LEVEL=DEBUG` → видно точный промпт и что вернула модель (`llm.parse.io`).
+2. Таблица `messages` — вся история диалога пользователя (то, что реально видел юзер).
+3. `stop=refusal` в `llm.parse` → модель отказалась (безопасность/лимит) — не баг кода.
+
+Типовые быстрые проверки:
 - **Чужие не получают ответ:** белый список — `bot/middlewares/whitelist.py` + `core/access.py`.
 - **Пустой/битый вердикт:** `AnthropicProvider.parse` бросает при `parsed_output is None`
-  (обычно refusal/лимит токенов) — смотри `stop_reason`.
+  (обычно refusal/лимит токенов) — смотри `stop_reason` и лог `llm.parse.empty`.
 - **Нет картинки капсулы:** `image_gen=off` в readiness → нет `OPENAI_API_KEY` или хост
   заблокирован сетевой политикой окружения.
+- **Медленно:** поле `ms` в `llm.parse` — латентность конкретного вызова модели.

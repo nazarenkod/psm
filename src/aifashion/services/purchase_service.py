@@ -5,11 +5,15 @@
 """
 from __future__ import annotations
 
+import structlog
+
 from aifashion.core.models import ImageInput, PurchaseVerdict
 from aifashion.engine.goal1_purchase import PurchaseAdvisor, format_verdict
 from aifashion.services.conversation_service import ConversationService
 from aifashion.services.profile_service import ProfileService
 from aifashion.services.wardrobe_service import WardrobeService
+
+log = structlog.get_logger()
 
 
 class PurchaseService:
@@ -56,4 +60,12 @@ class PurchaseService:
         request = item_link or note or "[фото вещи к покупке]"
         await self._conversation.record_user(user_id, f"Оценка покупки: {request}")
         await self._conversation.record_assistant(user_id, format_verdict(verdict))
+        log.info(
+            "goal1.verdict",
+            user_id=user_id,
+            buy=verdict.buy,
+            score=verdict.score,
+            duplicates=len(duplicates),
+            has_image=image is not None,
+        )
         return verdict
