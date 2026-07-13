@@ -4,6 +4,7 @@ Telegram-бот — персональный стилист. MVP закрыто�
 
 - **Требования:** [`REQUIREMENTS.md`](REQUIREMENTS.md)
 - **Архитектура:** [`ARCHITECTURE.md`](ARCHITECTURE.md)
+- **Гайд разработчика (как дорабатывать):** [`DEVELOPMENT.md`](DEVELOPMENT.md)
 
 ## Стек
 
